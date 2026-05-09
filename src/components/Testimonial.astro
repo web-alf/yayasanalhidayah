@@ -89,41 +89,12 @@ function sanitizeQuote(html: string): string {
 </section>
 
 <script is:inline>
-  (function() {
-    var slides = document.querySelectorAll('[data-testi-slide]');
-    var attrs = document.querySelectorAll('[data-testi-attr]');
-    var dots = document.querySelectorAll('[data-dot]');
-    var current = 0;
-    var total = slides.length;
-    var interval = 5000;
-    var timer;
-
-    function goTo(idx) {
-      slides[current].classList.remove('active');
-      attrs[current].classList.remove('active');
-      dots[current].classList.remove('active');
-      current = idx;
-      slides[current].classList.add('active');
-      attrs[current].classList.add('active');
-      dots[current].classList.add('active');
-    }
-
-    function next() {
-      goTo((current + 1) % total);
-    }
-
-    function startTimer() {
-      clearInterval(timer);
-      timer = setInterval(next, interval);
-    }
-
-    dots.forEach(function(dot, i) {
-      dot.addEventListener('click', function() {
-        goTo(i);
-        startTimer();
-      });
-    });
-
-    startTimer();
-  })();
+  (window.requestIdleCallback || setTimeout)(function() {
+    var sl = document.querySelectorAll('[data-testi-slide]'), at = document.querySelectorAll('[data-testi-attr]'),
+        dt = document.querySelectorAll('[data-dot]'), c = 0, n = sl.length, tm;
+    function go(i) { sl[c].classList.remove('active'); at[c].classList.remove('active'); dt[c].classList.remove('active'); c = i; sl[c].classList.add('active'); at[c].classList.add('active'); dt[c].classList.add('active'); }
+    function start() { clearInterval(tm); tm = setInterval(function() { go((c + 1) % n); }, 5000); }
+    dt.forEach(function(d, i) { d.addEventListener('click', function() { go(i); start(); }); });
+    start();
+  });
 </script>

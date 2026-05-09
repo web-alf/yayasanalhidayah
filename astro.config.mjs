@@ -5,4 +5,7 @@ export default defineConfig({
   output: 'static',
   adapter: cloudflare(),
   site: 'https://yayasanalhidayah.com',
+  build: {
+    inlineStylesheets: 'always',
+  },
 });

@@ -80,6 +80,9 @@ const jsonLd = {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#FAF7F0" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0E1525" media="(prefers-color-scheme: dark)" />
+  <link rel="preload" as="image" href="/hero-1.webp" type="image/webp" fetchpriority="high" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://wa.me" />
   <title>{title}</title>
   <meta name="description" content={description} />
@@ -121,33 +124,14 @@ const jsonLd = {
   <link rel="icon" href="/logo.webp" type="image/webp" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-  <!-- Preload LCP image -->
-  <link rel="preload" as="image" href="/hero-1.webp" type="image/webp" fetchpriority="high" />
-
-  <!-- Fonts — critical subset preloaded, rest async -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Fonts — single combined request, async loaded -->
   <link
     rel="preload"
     as="style"
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     onload="this.onload=null;this.rel='stylesheet'"
   />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" /></noscript>
-  <link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap"
-    onload="this.onload=null;this.rel='stylesheet'"
-  />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&display=swap" /></noscript>
-  <link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
-    onload="this.onload=null;this.rel='stylesheet'"
-  />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" /></noscript>
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" /></noscript>
 
   <!-- Theme init (prevent flash) -->
   <script is:inline>
@@ -168,41 +152,27 @@ const jsonLd = {
         });
       }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
       document.querySelectorAll('[data-reveal],[data-reveal-img]').forEach(function(el) { io.observe(el); });
-
+    })();
+  </script>
+  <script is:inline>
+    (window.requestIdleCallback || setTimeout)(function() {
       document.querySelectorAll('img[loading="lazy"]').forEach(function(img) {
-        function reveal() {
-          img.classList.add('loaded');
-          var p = img.closest('.skeleton');
-          if (p) p.classList.remove('skeleton');
-        }
-        if (img.complete) reveal(); else img.addEventListener('load', reveal);
+        function r() { img.classList.add('loaded'); var p = img.closest('.skeleton'); if (p) p.classList.remove('skeleton'); }
+        if (img.complete) r(); else img.addEventListener('load', r);
       });
-
       var hs = document.querySelectorAll('.hero-slide');
       if (hs.length > 1) { var c = 0; setInterval(function() { hs[c].classList.remove('active'); c = (c + 1) % hs.length; hs[c].classList.add('active'); }, 3000); }
-
       var cio = new IntersectionObserver(function(entries) {
         entries.forEach(function(e) {
-          if (e.isIntersecting) {
-            var el = e.target, target = parseInt(el.getAttribute('data-counter'), 10),
-                suffix = el.getAttribute('data-suffix') || '', dur = target > 100 ? 2000 : 1200, start = null;
-            el.textContent = '0' + suffix;
-            function step(ts) {
-              if (!start) start = ts;
-              var p = Math.min((ts - start) / dur, 1), c1 = 1.70158,
-                  eased = 1 + (c1 + 1) * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2),
-                  cur = Math.min(Math.round(eased * target), target);
-              el.textContent = cur + suffix;
-              if (p < 1) { el.style.transform = 'scale(' + (1 + 0.08 * Math.sin(p * Math.PI * 3) * (1 - p)) + ')'; requestAnimationFrame(step); }
-              else { el.textContent = target + suffix; el.style.transform = ''; el.classList.add('counter-done'); }
-            }
-            requestAnimationFrame(step);
-            cio.unobserve(el);
-          }
+          if (!e.isIntersecting) return;
+          var el = e.target, t = +el.getAttribute('data-counter'), s = el.getAttribute('data-suffix') || '', d = t > 100 ? 2000 : 1200, st = 0;
+          el.textContent = '0' + s;
+          (function step(ts) { if (!st) st = ts; var p = Math.min((ts - st) / d, 1), c1 = 1.70158, v = Math.min(Math.round((1 + (c1+1) * Math.pow(p-1,3) + c1 * Math.pow(p-1,2)) * t), t); el.textContent = v + s; p < 1 ? (el.style.transform = 'scale(' + (1 + .08 * Math.sin(p * Math.PI * 3) * (1-p)) + ')', requestAnimationFrame(step)) : (el.textContent = t + s, el.style.transform = '', el.classList.add('counter-done')); })(performance.now());
+          cio.unobserve(el);
         });
       }, { threshold: 0.5 });
       document.querySelectorAll('[data-counter]').forEach(function(el) { cio.observe(el); });
-    })();
+    });
   </script>
 </body>
 </html>

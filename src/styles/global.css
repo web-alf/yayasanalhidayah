@@ -1167,6 +1167,20 @@ section { position: relative; }
   .foot-bar { font-size: 9px; }
 }
 
+/* Hero CSS-only entrance — no JS, no TBT cost */
+.hero-fade {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: heroFadeIn 800ms var(--ease-emph) forwards;
+  animation-delay: calc(var(--d, 0) * 120ms + 200ms);
+}
+@keyframes heroFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade { opacity: 1; transform: none; animation: none; }
+}
+
 /* Animations — scroll reveal */
 [data-reveal] {
   opacity: 0;
