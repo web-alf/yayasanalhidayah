@@ -311,6 +311,7 @@ section { position: relative; }
   transform: translate(-50%, -50%);
   display: flex;
   gap: 4px;
+  pointer-events: auto;
 }
 .nav-links a {
   padding: 8px 14px;

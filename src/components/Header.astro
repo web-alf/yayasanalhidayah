@@ -47,7 +47,7 @@
 </header>
 
 <script is:inline>
-  (window.requestIdleCallback || setTimeout)(function() {
+  (function() {
     var nav = document.getElementById('main-nav'), tgl = document.getElementById('nav-toggle'),
         lnk = document.getElementById('nav-links'), bd = document.getElementById('nav-backdrop');
     window.addEventListener('scroll', function() { nav.classList.toggle('scrolled', window.scrollY > 40); }, { passive: true });
@@ -66,5 +66,5 @@
       dk ? (document.documentElement.removeAttribute('data-theme'), localStorage.removeItem('theme')) : (document.documentElement.setAttribute('data-theme', 'dark'), localStorage.setItem('theme', 'dark'));
       upd();
     });
-  });
+  })();
 </script>
