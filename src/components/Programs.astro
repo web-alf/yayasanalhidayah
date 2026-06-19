@@ -1,5 +1,15 @@
 ---
-import { latestPrograms, donasiUrl } from '../data/programs';
+import type { Program } from '../lib/supabase/queries/marketing';
+import ProgramCard from './ProgramCard.astro';
+
+interface Props {
+  programs?: Program[];
+}
+// Falls back to the static programs.ts only when no CMS data is passed (e.g. an
+// empty DB before seed). When index.astro passes live rows, those win.
+import { latestPrograms as fallbackPrograms, donasiUrl } from '../data/programs';
+const { programs } = Astro.props;
+const items = (programs && programs.length > 0) ? programs : fallbackPrograms.map((p) => ({ ...p, donasi_url: donasiUrl(p.slug) }));
 ---
 
 <section class="section-pad" id="program">
@@ -16,21 +26,7 @@ import { latestPrograms, donasiUrl } from '../data/programs';
       </p>
     </div>
     <div class="programs-grid">
-      {latestPrograms.map((p) => (
-        <article class="program-card" data-reveal>
-          <div class="program-img skeleton">
-            <img src={p.image} alt={p.alt} loading="lazy" decoding="async" width="800" height="600" />
-            <span class="program-tag">{p.tag}</span>
-          </div>
-          <div class="program-body">
-            <h3>{p.title}</h3>
-            <p>{p.description}</p>
-            <a href={donasiUrl(p.slug)} class="program-cta" target="_blank" rel="noopener noreferrer">
-              Titipkan amanah <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-            </a>
-          </div>
-        </article>
-      ))}
+      {items.map((p) => <ProgramCard p={p} />)}
     </div>
     <div class="programs-foot" data-reveal>
       <a href="/program" class="btn btn-ghost">

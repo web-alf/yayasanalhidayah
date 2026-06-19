@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
@@ -7,19 +8,33 @@ import About from '../components/About.astro';
 import WhyUs from '../components/WhyUs.astro';
 import Programs from '../components/Programs.astro';
 import Testimonial from '../components/Testimonial.astro';
+import LatestArticles from '../components/LatestArticles.astro';
 import DonorCTA from '../components/DonorCTA.astro';
 import Footer from '../components/Footer.astro';
 import WhatsAppFab from '../components/WhatsAppFab.astro';
+import { getLatestPrograms, getHeroSlides, getTrustLogos, getWhyUs } from '../lib/supabase/queries/marketing';
+
+// SSR: read the latest data from the CMS so admin edits appear on the
+// homepage within the edge-cache window (~1 min) without a rebuild. Falls back
+// to the static programs.ts when Supabase is unreachable / unseeded.
+const supabase = Astro.locals.supabase;
+const [latestPrograms, heroSlides, trustLogos, whyUs] = await Promise.all([
+  getLatestPrograms(supabase, 3),
+  getHeroSlides(supabase),
+  getTrustLogos(supabase),
+  getWhyUs(supabase),
+]);
 ---
 
 <Base title="Yayasan Alhidayah — Amanah, Tepat Sasaran, Sesuai Syariat">
   <Header />
-  <Hero />
-  <TrustMarquee />
+  <Hero slides={heroSlides} />
+  <TrustMarquee logos={trustLogos} />
   <About />
-  <WhyUs />
-  <Programs />
+  <WhyUs reasons={whyUs} />
+  <Programs programs={latestPrograms} />
   <Testimonial />
+  <LatestArticles />
   <DonorCTA />
   <Footer />
   <WhatsAppFab />

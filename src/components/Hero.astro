@@ -1,15 +1,24 @@
 ---
-const heroImages = [
-  { src: '/hero/hero-1.webp', alt: 'Kegiatan Yayasan Alhidayah 1' },
-  { src: '/hero/hero-2.webp', alt: 'Kegiatan Yayasan Alhidayah 2' },
+import type { HeroSlide } from '../lib/supabase/queries/marketing';
+
+interface Props {
+  slides?: HeroSlide[];
+}
+const fallbackImages = [
+  { src: '/hero/hero-1.webp', alt: 'Kegiatan Yayasan Alhidayah 1', cap: '' },
+  { src: '/hero/hero-2.webp', alt: 'Kegiatan Yayasan Alhidayah 2', cap: '' },
 ];
+const { slides } = Astro.props;
+const images = (slides && slides.length > 0)
+  ? slides.map(s => ({ src: s.src, alt: s.cap || 'Hero Slide', cap: s.cap }))
+  : fallbackImages;
 ---
 
 <section class="hero" id="top">
   <div class="container">
     <div class="hero-C on-deep">
       <div class="hero-bg">
-        {heroImages.map((img, i) => (
+        {images.map((img, i) => (
           <img
             class={`hero-slide ${i === 0 ? 'active' : ''}`}
             src={img.src}

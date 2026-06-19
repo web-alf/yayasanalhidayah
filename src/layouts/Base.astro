@@ -1,15 +1,28 @@
 ---
 import '../styles/global.css';
+import { getSeoSettings, buildTitle } from '../lib/seo';
 
 interface Props {
   title: string;
   description?: string;
   noindex?: boolean;
+  canonical?: string;
+  ogImage?: string;
+  rawTitle?: boolean; // skip the global separator (article pages pass a fully-formed title)
 }
 
-const { title, description = 'Yayasan Alhidayah — Lembaga sosial & keagamaan dari Bandung Barat. Wakaf mushaf Al-Quran, kafarat, dan bantuan sosial untuk fakir miskin, anak yatim, dan penggiat dakwah.', noindex = false } = Astro.props;
-const canonicalUrl = new URL(Astro.url.pathname, 'https://yayasanalhidayah.com').href;
-const ogImage = 'https://yayasanalhidayah.com/hero-1.jpg';
+const { title, description, noindex = false, canonical, ogImage, rawTitle = false } = Astro.props;
+// Pull Rank-Math-style global SEO settings from the CMS (gracefully returns
+// defaults when Supabase is unreachable, e.g. build-time prerender of /404).
+const seo = await getSeoSettings(Astro.locals?.supabase ?? null);
+const resolvedTitle = rawTitle ? title : buildTitle(title, seo);
+const resolvedDescription = description || seo.homepage_description || 'Yayasan Alhidayah — Lembaga sosial & keagamaan dari Bandung Barat. Wakaf mushaf Al-Quran, kafarat, dan bantuan sosial untuk fakir miskin, anak yatim, dan penggiat dakwah.';
+const canonicalUrl = canonical || new URL(Astro.url.pathname, 'https://yayasanalhidayah.com').href;
+const ogImageUrl = ogImage || seo.default_og_image || 'https://yayasanalhidayah.com/hero/hero-1.webp';
+const ga4Id = seo.ga4_id?.trim() || '';
+const gsc = seo.gsc_verification?.trim() || '';
+const bing = seo.bing_verification?.trim() || '';
+const robotsContent = (noindex || !seo.robots_index) ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -85,11 +98,15 @@ const jsonLd = {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://wa.me" />
-  <title>{title}</title>
-  <meta name="description" content={description} />
+  <title>{resolvedTitle}</title>
+  <meta name="description" content={resolvedDescription} />
+
+  {/* Search-engine verification (Rank Math SEO settings). */}
+  {gsc && <meta name="google-site-verification" content={gsc} />}
+  {bing && <meta name="msvalidate.01" content={bing} />}
 
   <!-- SEO -->
-  <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'} />
+  <meta name="robots" content={robotsContent} />
   <link rel="canonical" href={canonicalUrl} />
   <link rel="alternate" hreflang="id" href={canonicalUrl} />
   <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
@@ -101,22 +118,28 @@ const jsonLd = {
   <meta name="ICBM" content="-6.89, 107.34" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content={title} />
-  <meta property="og:description" content={description} />
+  <meta property="og:title" content={resolvedTitle} />
+  <meta property="og:description" content={resolvedDescription} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonicalUrl} />
   <meta property="og:locale" content="id_ID" />
   <meta property="og:site_name" content="Yayasan Alhidayah" />
-  <meta property="og:image" content={ogImage} />
+  <meta property="og:image" content={ogImageUrl} />
   <meta property="og:image:width" content="1000" />
   <meta property="og:image:height" content="449" />
   <meta property="og:image:alt" content="Kegiatan Yayasan Alhidayah — Wakaf & Kafarat" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={title} />
-  <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:title" content={resolvedTitle} />
+  <meta name="twitter:description" content={resolvedDescription} />
+  <meta name="twitter:image" content={ogImageUrl} />
+
+  {/* Google Analytics 4 (Rank Math SEO settings) — only when a Measurement ID is set. */}
+  {ga4Id && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}></script>}
+  {ga4Id && (
+    <script is:inline set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4Id}');`} />
+  )}
 
   <!-- Structured Data -->
   <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

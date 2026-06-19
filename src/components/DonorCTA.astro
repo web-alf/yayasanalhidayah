@@ -1,9 +1,16 @@
 ---
-const items = [
-  'Kafarat dapat terus disalurkan kepada yang berhak.',
-  'Wakaf mushaf menjangkau lebih banyak desa pelosok.',
-  'Program kebaikan berjalan secara berkelanjutan.',
-];
+import { getSettings } from '../lib/supabase/queries/marketing';
+
+const settings = await getSettings(Astro.locals.supabase);
+const cta = (settings.donorcta ?? {}) as Record<string, string>;
+
+const heading = cta.heading || 'Jangan pulang dengan <em>kewajiban</em><br/>yang belum selesai.';
+const description = cta.description || 'Dengan menjadi <strong style="color: var(--accent); font-weight: 600;">donatur tetap</strong>, Anda ikut menjaga agar setiap amanah hari ini tidak berhenti di hari esok.';
+const items = (cta.items || 'Kafarat dapat terus disalurkan kepada yang berhak.\nWakaf mushaf menjangkau lebih banyak desa pelosok.\nProgram kebaikan berjalan secara berkelanjutan.').split('\n').filter(Boolean);
+const primaryText = cta.cta_primary_text || 'Selesaikan Hari Ini';
+const primaryUrl = cta.cta_primary_url || '#program';
+const secondaryText = cta.cta_secondary_text || 'Hubungi Kami';
+const secondaryUrl = cta.cta_secondary_url || '#kontak';
 ---
 
 <section class="section-pad" id="donor">
@@ -12,16 +19,14 @@ const items = [
       <div class="donor-grid">
         <div>
           <div class="eyebrow"><span class="section-num" style="color: var(--ink-on-deep-2);">05 / Donatur Tetap</span></div>
-          <h2>Jangan pulang dengan <em>kewajiban</em><br/>yang belum selesai.</h2>
-          <p style="color: var(--ink-on-deep-2); font-size: 17px; line-height: 1.6; margin-top: 24px; max-width: 46ch;">
-            Dengan menjadi <strong style="color: var(--accent); font-weight: 600;">donatur tetap</strong>, Anda ikut menjaga agar setiap amanah hari ini tidak berhenti di hari esok.
-          </p>
+          <h2 set:html={heading} />
+          <p style="color: var(--ink-on-deep-2); font-size: 17px; line-height: 1.6; margin-top: 24px; max-width: 46ch;" set:html={description} />
           <div class="ctas" style="margin-top: 36px;">
-            <a class="btn btn-primary" href="#program">
-              Selesaikan Hari Ini <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            <a class="btn btn-primary" href={primaryUrl}>
+              {primaryText} <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
             </a>
-            <a class="btn btn-ghost" href="#kontak">
-              Hubungi Kami
+            <a class="btn btn-ghost" href={secondaryUrl}>
+              {secondaryText}
             </a>
           </div>
         </div>

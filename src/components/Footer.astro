@@ -1,8 +1,29 @@
 ---
+import { getSettings } from '../lib/supabase/queries/marketing';
+
 interface Props {
   base?: string;
 }
 const { base = '' } = Astro.props;
+
+const settings = await getSettings(Astro.locals.supabase);
+const contact = (settings.contact ?? {}) as Record<string, string>;
+const social = (settings.social ?? {}) as Record<string, string>;
+const ft = (settings.footer ?? {}) as Record<string, string>;
+
+const whatsapp = contact.whatsapp || '6285177007772';
+const email = contact.email || 'cs@yayasanalhidayah.id';
+const address = contact.address || 'Kampung Pamokokolan RT 03/01\nDesa Bunijaya, Kec. Gununghalu\nKabupaten Bandung Barat';
+const igUrl = social.instagram || 'https://www.instagram.com/@aksibaikalhidayah';
+const fbUrl = social.facebook || 'https://www.facebook.com/Yas%20Alhidayah';
+const brandDesc = ft.brand_description || 'Yayasan Alhidayah adalah lembaga yang berfokus pada pendidikan santri penghafal Al-Qur\'an, pembinaan adab dan karakter Islami, penyebaran mushaf ke pelosok, dan program sosial dakwah masyarakat.';
+const legalitasRaw = ft.legalitas || 'Kemenkumham RI|0038197 AH.01.12 Tahun 2025\nNPWP|31.714.301.4-421.000';
+const legalitas = legalitasRaw.split('\n').filter(Boolean).map(line => {
+  const [label, value] = line.split('|');
+  return { label: label?.trim() || '', value: value?.trim() || '' };
+});
+const copyright = ft.copyright || '2026 Yayasan Alhidayah · All Rights Reserved';
+const waLink = `https://wa.me/${whatsapp}?text=Assalamu'alaikum%2C%20saya%20ingin%20bertanya%20tentang%20Yayasan%20Alhidayah`;
 ---
 
 <footer class="foot" id="kontak">
@@ -19,44 +40,43 @@ const { base = '' } = Astro.props;
             <span class="b2">yayasanalhidayah.com</span>
           </span>
         </a>
-        <p>
-          Yayasan Alhidayah adalah lembaga yang berfokus pada pendidikan santri penghafal Al-Qur'an, pembinaan adab dan karakter Islami, penyebaran mushaf ke pelosok, dan program sosial dakwah masyarakat.
-        </p>
+        <p>{brandDesc}</p>
       </div>
       <div>
         <h4>Legalitas</h4>
         <ul class="foot-list">
-          <li><span class="label">Kemenkumham RI</span>0038197 AH.01.12 Tahun 2025</li>
-          <li><span class="label">NPWP</span>31.714.301.4-421.000</li>
+          {legalitas.map(({ label, value }) => (
+            <li><span class="label">{label}</span>{value}</li>
+          ))}
         </ul>
       </div>
       <div>
         <h4>Alamat</h4>
         <ul class="foot-list">
-          <li>
-            Kampung Pamokokolan RT 03/01<br/>
-            Desa Bunijaya, Kec. Gununghalu<br/>
-            Kabupaten Bandung Barat
-          </li>
+          <li set:html={address.replace(/\n/g, '<br/>')} />
         </ul>
       </div>
       <div>
         <h4>Kontak</h4>
         <ul class="foot-list">
-          <li><span class="label">WhatsApp</span><a href="https://wa.me/6285177007772?text=Assalamu'alaikum%2C%20saya%20ingin%20bertanya%20tentang%20Yayasan%20Alhidayah" target="_blank" rel="noopener noreferrer">+62 851-7700-7772</a></li>
-          <li><span class="label">Email</span><a href="mailto:cs@yayasanalhidayah.id">cs@yayasanalhidayah.id</a></li>
+          <li><span class="label">WhatsApp</span><a href={waLink} target="_blank" rel="noopener noreferrer">+{whatsapp.replace(/^62/, '62 ').replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3')}</a></li>
+          <li><span class="label">Email</span><a href={`mailto:${email}`}>{email}</a></li>
         </ul>
       </div>
     </div>
     <div class="foot-bar">
-      <div>&copy; 2026 Yayasan Alhidayah &middot; All Rights Reserved</div>
+      <div>&copy; {copyright}</div>
       <div class="foot-social">
-        <a href="https://www.instagram.com/@aksibaikalhidayah" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>
-        </a>
-        <a href="https://www.facebook.com/Yas%20Alhidayah" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-        </a>
+        {igUrl && (
+          <a href={igUrl} aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.6" fill="currentColor"/></svg>
+          </a>
+        )}
+        {fbUrl && (
+          <a href={fbUrl} aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+        )}
       </div>
     </div>
   </div>

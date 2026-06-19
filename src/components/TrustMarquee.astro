@@ -1,15 +1,34 @@
 ---
-const items = [
+import type { TrustLogo } from '../lib/supabase/queries/marketing';
+
+interface Props {
+  logos?: TrustLogo[];
+}
+const fallbackItems = [
   'Amanah', 'Tepat Sasaran', 'Sesuai Syariat', 'Berbadan Hukum',
   'Transparan', 'Wakaf Mushaf', 'Kafarat', 'Bantuan Sosial',
 ];
-const doubled = [...items, ...items];
+
+const { logos } = Astro.props;
+const hasLogos = logos && logos.length > 0;
+// If we have actual image logos, render them. If not, use the fallback text.
+// Double the array for the continuous marquee effect.
+const doubledText = hasLogos ? [] : [...fallbackItems, ...fallbackItems];
+const doubledLogos = hasLogos ? [...logos, ...logos] : [];
 ---
 
 <div class="marquee" aria-hidden="true">
   <div class="marquee-track">
-    {doubled.map((item) => (
-      <span class="marquee-item">{item}</span>
-    ))}
+    {hasLogos ? (
+      doubledLogos.map((logo) => (
+        <span class="marquee-item marquee-item--img">
+          <img src={logo.src} alt={logo.name} title={logo.name} loading="lazy" decoding="async" height="40" />
+        </span>
+      ))
+    ) : (
+      doubledText.map((item) => (
+        <span class="marquee-item">{item}</span>
+      ))
+    )}
   </div>
 </div>

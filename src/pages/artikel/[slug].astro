@@ -1,0 +1,230 @@
+---
+export const prerender = false;
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import { getArticleBySlug, getRelatedArticles } from '@/lib/supabase/queries/articles';
+
+const { slug } = Astro.params;
+const article = await getArticleBySlug(Astro.locals.supabase, slug!);
+if (!article) return Astro.redirect('/404');
+
+// Fire-and-forget view count bump.
+(Astro.locals.supabase.rpc as any)('increment_view', { p_slug: slug! }).then(() => {});
+
+const related = await getRelatedArticles(Astro.locals.supabase, {
+  categoryId: article.category_id,
+  excludeId: article.id,
+});
+
+const siteUrl = 'https://yayasanalhidayah.com';
+const ogImage = article.og_image || article.cover_image || `${siteUrl}/hero/hero-1.webp`;
+const metaTitle = article.meta_title || article.title;
+const metaDesc = article.meta_description || article.excerpt || '';
+
+// Cover sizing: derive aspect-ratio + object-position from CMS fields, with
+// sensible fallbacks for articles written before the editor supported these.
+const coverRatio = (article.cover_ratio as string | null) || '16:9';
+const coverFocal = (article.cover_focal as string | null) || '50,50';
+const coverSize = (article.cover_size as string | null) || 'full';
+function coverAspectCss(r: string): string {
+  if (r === '4:3') return '4 / 3';
+  if (r === '1:1') return '1 / 1';
+  if (r === 'original') return 'auto';
+  return '16 / 9';
+}
+const [fx, fy] = coverFocal.split(',').map((n) => Number(n));
+const coverObjectPosition = `${Number.isNaN(fx) ? 50 : fx}% ${Number.isNaN(fy) ? 50 : fy}%`;
+const coverStyle = `aspect-ratio:${coverAspectCss(coverRatio)};object-position:${coverObjectPosition};`;
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '';
+  return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
+}
+
+const authorName = article.author_name || 'Yayasan Alhidayah';
+const categoryName = (article as any).category?.name;
+const tags = ((article as any).article_tags ?? []).map((at: any) => at.tag);
+---
+
+<Base
+  title={`${metaTitle} — Yayasan Alhidayah`}
+  description={metaDesc}
+>
+  <Header base="/" />
+  <main id="main-content">
+    {/* Article header */}
+    <article class="article">
+      <header class="article__header">
+        <div class="container article__narrow">
+          {categoryName && <span class="eyebrow">{categoryName}</span>}
+          <h1 class="article__title">{article.title}</h1>
+          <div class="article__meta">
+            <span>{authorName}</span>
+            <span>·</span>
+            <time datetime={article.published_at ?? ''}>{formatDate(article.published_at)}</time>
+            {article.reading_time && (
+              <>
+                <span>·</span>
+                <span>{article.reading_time} menit baca</span>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {article.cover_image && (
+        <div class={`article__cover article__cover--${coverSize} container`}>
+          <img src={article.cover_image} alt={article.title} style={coverStyle} />
+        </div>
+      )}
+
+      <div class="article__body container article__narrow" set:html={article.content_html ?? ''} />
+
+      {tags.length > 0 && (
+        <div class="article__tags container article__narrow">
+          {tags.map((t: any) => t && (
+            <span class="article__tag">{t.name}</span>
+          ))}
+        </div>
+      )}
+    </article>
+
+    {/* Related articles */}
+    {related.length > 0 && (
+      <section class="section-pad">
+        <div class="container">
+          <h2 class="display" style="font-size:clamp(24px,3vw,32px);margin-bottom:32px;">Artikel Terkait</h2>
+          <div class="article-related-grid">
+            {related.map((a) => (
+              <BlogCard
+                slug={a.slug}
+                title={a.title}
+                cover_image={a.cover_image}
+                published_at={a.published_at}
+                reading_time={a.reading_time}
+                category={a.category}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* JSON-LD Article schema */}
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": article.title,
+      "image": ogImage,
+      "datePublished": article.published_at,
+      "dateModified": article.updated_at,
+      "author": { "@type": "Person", "name": authorName },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Yayasan Alhidayah",
+        "logo": { "@type": "ImageObject", "url": `${siteUrl}/logo-clear.png` },
+      },
+      "mainEntityOfPage": { "@type": "WebPage", "@id": `${siteUrl}/artikel/${slug}` },
+      "description": metaDesc,
+    })} />
+  </main>
+  <Footer base="/" />
+</Base>
+
+<style>
+  .article__narrow { max-width: 760px; }
+  .article__header {
+    padding-top: 140px;
+    padding-bottom: 48px;
+    text-align: center;
+  }
+  .article__title {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 5vw, 52px);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 16px 0 20px;
+    color: var(--ink);
+  }
+  .article__meta {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .article__cover {
+    margin-bottom: 48px;
+  }
+  .article__cover img {
+    width: 100%;
+    max-height: 520px;
+    object-fit: cover;
+    border-radius: var(--r-lg);
+  }
+  /* Admin-controlled display size: caps max-width so the hero doesn't dominate. */
+  .article__cover--medium img { max-width: 720px; margin-left: auto; margin-right: auto; }
+  .article__cover--small img  { max-width: 480px; margin-left: auto; margin-right: auto; }
+  /* Article prose — yayasanalhidayah palette */
+  .article__body {
+    font-size: clamp(16px, 1.15vw, 18px);
+    line-height: 1.75;
+    color: var(--ink);
+  }
+  .article__body :global(> * + *) { margin-top: 1em; }
+  .article__body :global(h2) { font-family: var(--font-display); font-size: clamp(24px, 3vw, 32px); font-weight: 600; margin-top: 2em; color: var(--ink); }
+  .article__body :global(h3) { font-family: var(--font-display); font-size: clamp(20px, 2vw, 24px); font-weight: 600; margin-top: 1.6em; color: var(--ink); }
+  .article__body :global(a) { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; }
+  .article__body :global(a:hover) { color: var(--brand-2); }
+  .article__body :global(blockquote) { border-left: 3px solid var(--brand); padding-left: 1.2em; color: var(--ink-2); font-style: italic; }
+  .article__body :global(pre) { background: #0d1117; color: #e6edf3; padding: 1em 1.2em; border-radius: var(--r-sm); overflow-x: auto; font-size: 0.875em; }
+  .article__body :global(code) { background: var(--bg-alt); padding: 0.15em 0.35em; border-radius: 4px; font-size: 0.875em; font-family: var(--font-mono); }
+  .article__body :global(pre code) { background: none; padding: 0; }
+  .article__body :global(img) { border-radius: var(--r-md); max-width: 100%; height: auto; }
+  /* Resized / aligned images (editor node view stores width + data-align) */
+  .article__body :global(img[data-align="left"]) { margin-right: auto; }
+  .article__body :global(img[data-align="center"]) { margin-left: auto; margin-right: auto; display: block; }
+  .article__body :global(img[data-align="right"]) { margin-left: auto; display: block; }
+  .article__body :global(img[width]) { display: block; }
+  .article__body :global(ul) { list-style: disc; padding-left: 1.4em; }
+  .article__body :global(ol) { list-style: decimal; padding-left: 1.4em; }
+  .article__body :global(hr) { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
+  .article__body :global(table) { width: 100%; border-collapse: collapse; margin: 1.4em 0; }
+  .article__body :global(th), .article__body :global(td) { border: 1px solid var(--line); padding: 0.5em 0.75em; text-align: left; }
+  .article__body :global(th) { background: var(--bg-alt); font-weight: 600; }
+  .article__body :global(mark) { background-color: var(--highlight); color: var(--ink); border-radius: 2px; padding: 0 0.1em; }
+  .article__body :global(sub) { font-size: 0.75em; vertical-align: sub; }
+  .article__body :global(sup) { font-size: 0.75em; vertical-align: super; }
+  .article__body :global(ul[data-type="taskList"]) { list-style: none; padding-left: 0; }
+  .article__body :global(ul[data-type="taskList"] li) { display: flex; align-items: flex-start; gap: 0.5em; }
+  .article__body :global(ul[data-type="taskList"] li > div) { flex: 1 1 auto; }
+  .article__body :global(ul[data-type="taskList"] input[type="checkbox"]) { margin-top: 0.45em; accent-color: var(--brand); }
+  .article__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .article__tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-2);
+  }
+  .article-related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  @media (max-width: 640px) {
+    .article__header { padding-top: 110px; }
+    .article__title { font-size: clamp(26px, 7vw, 34px); }
+  }
+</style>

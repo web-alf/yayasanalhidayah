@@ -1,0 +1,62 @@
+---
+import BlogCard from './BlogCard.astro';
+import { listPublishedArticles } from '@/lib/supabase/queries/articles';
+
+const { articles } = await listPublishedArticles(Astro.locals.supabase, { page: 1, perPage: 3 });
+---
+
+<section class="section-pad" id="artikel">
+  <div class="container">
+    <div class="articles-header" data-reveal>
+      <div>
+        <div class="eyebrow"><span class="section-num">06 / Blog</span></div>
+        <h2 class="display">Artikel <em>Terbaru</em></h2>
+      </div>
+      <a href="/artikel" class="btn btn-ghost">
+        Lihat Semua <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+
+    {articles.length === 0 ? (
+      <div class="articles-empty" data-reveal>
+        <p>Belum ada artikel. Nantikan tulisan pertama kami!</p>
+      </div>
+    ) : (
+      <div class="articles-grid" data-reveal>
+        {articles.map((a) => (
+          <BlogCard
+            slug={a.slug}
+            title={a.title}
+            excerpt={a.excerpt}
+            cover_image={a.cover_image}
+            published_at={a.published_at}
+            reading_time={a.reading_time}
+            category={a.category}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .articles-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  .articles-empty {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--ink-3);
+    font-size: 17px;
+  }
+</style>

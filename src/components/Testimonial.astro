@@ -1,5 +1,7 @@
 ---
-const testimonials = [
+import { getTestimonials } from '../lib/supabase/queries/marketing';
+
+const fallbackTestimonials = [
   {
     initial: 'H',
     name: 'Hamba Allah',
@@ -45,6 +47,19 @@ function sanitizeQuote(html: string): string {
     .replace(/&lt;em&gt;/g, '<em>')
     .replace(/&lt;\/em&gt;/g, '</em>');
 }
+
+// SSR: prefer CMS-managed testimonials; fall back to the static set above when
+// the DB is empty / unreachable so the section never goes blank.
+const dbRows = await getTestimonials(Astro.locals.supabase);
+const testimonials = dbRows.length > 0
+  ? dbRows.map((t) => ({
+      initial: (t.name || '?').trim().charAt(0).toUpperCase(),
+      name: t.name,
+      role: t.role || '',
+      stars: 5,
+      quote: t.body,
+    }))
+  : fallbackTestimonials;
 ---
 
 <section class="testimonial section-pad" id="testimoni">

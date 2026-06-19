@@ -1,5 +1,10 @@
 ---
-const points = [
+import type { WhyUsItem } from '../lib/supabase/queries/marketing';
+
+interface Props {
+  reasons?: WhyUsItem[];
+}
+const fallbackPoints = [
   {
     n: '01',
     t: 'Legal Resmi & Berbadan Hukum',
@@ -19,6 +24,10 @@ const points = [
     icon: 'pulse',
   },
 ];
+const { reasons } = Astro.props;
+const points = (reasons && reasons.length > 0)
+  ? reasons.map(r => ({ n: r.n, t: r.title, d: r.descr, icon: r.n === '01' ? 'shield' : r.n === '02' ? 'eye' : 'pulse' }))
+  : fallbackPoints;
 ---
 
 <section class="why section-pad" id="mengapa">

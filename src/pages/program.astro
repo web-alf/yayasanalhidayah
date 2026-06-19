@@ -1,8 +1,19 @@
 ---
+export const prerender = false;
 import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { programs, donasiUrl, categories } from '../data/programs';
+import ProgramCard from '../components/ProgramCard.astro';
+import { getPrograms } from '../lib/supabase/queries/marketing';
+import { programs as fallbackPrograms, donasiUrl } from '../data/programs';
+
+// SSR: list all published CMS campaigns; fall back to the static programs.ts
+// when the DB is empty / unreachable.
+const dbPrograms = await getPrograms(Astro.locals.supabase);
+const programs = dbPrograms.length > 0
+  ? dbPrograms
+  : fallbackPrograms.map((p) => ({ ...p, donasi_url: donasiUrl(p.slug) }));
+const categories = ['Kafarat', 'Fidyah', 'Kemanusiaan'] as const;
 ---
 
 <Base title="Program Donasi — Yayasan Alhidayah" description="Daftar lengkap program donasi Yayasan Alhidayah: Kafarat, Fidyah, dan program kemanusiaan. Titipkan amanah Anda hari ini.">
@@ -38,21 +49,7 @@ import { programs, donasiUrl, categories } from '../data/programs';
       </div>
 
       <div class="programs-grid" id="programs-grid">
-        {programs.map((p) => (
-          <article class="program-card" data-reveal data-category={p.category}>
-            <div class="program-img skeleton">
-              <img src={p.image} alt={p.alt} loading="lazy" decoding="async" width="800" height="600" />
-              <span class="program-tag">{p.tag}</span>
-            </div>
-            <div class="program-body">
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
-              <a href={donasiUrl(p.slug)} class="program-cta" target="_blank" rel="noopener noreferrer">
-                Titipkan amanah <span class="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-              </a>
-            </div>
-          </article>
-        ))}
+        {programs.map((p) => <ProgramCard p={p} category={p.category} />)}
       </div>
 
       <div class="program-empty" id="programs-empty" hidden>
