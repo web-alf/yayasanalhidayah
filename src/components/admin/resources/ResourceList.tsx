@@ -45,7 +45,8 @@ export default function ResourceList({ resourceSlug, initial }: Props) {
       const fresh = s.created
         ? `\n${s.created} campaign baru dipublikasikan.`
         : '';
-      toast.success(`Sync ${s.source}: ${s.updated}/${s.matched} diperbarui.${fresh}`);
+      const gone = s.removed ? `\n${s.removed} campaign lama dihapus.` : '';
+      toast.success(`Sync ${s.source}: ${s.updated}/${s.matched} diperbarui.${fresh}${gone}`);
       window.location.reload();
     } catch {
       toast.error('Sync gagal');

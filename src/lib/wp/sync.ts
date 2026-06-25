@@ -16,6 +16,8 @@ export interface SyncSummary {
   newWpCampaigns: { slug: string; title: string }[];
   /** Count of rows created this run (subset of newWpCampaigns that inserted OK). */
   created: number;
+  /** Count of WP-managed rows hard-deleted because their campaign no longer exists in WP. */
+  removed: number;
   errors: string[];
 }
 
@@ -33,12 +35,14 @@ export async function syncProgramsFromWP(
   const nowIso = new Date().toISOString();
 
   // Load existing programs (slug → id) so we match WP rows to rows we own.
+  // `wp_campaign_id` marks rows that originated from a WP sync (vs. manually
+  // authored in the admin) — only those are candidates for auto-delete.
   const { data: existing, error: readErr } = await client
     .from('programs')
-    .select('id, slug, title')
+    .select('id, slug, title, wp_campaign_id')
     .order('slug');
   if (readErr) {
-    return { source: 'rest', fetched: 0, matched: 0, updated: 0, newWpCampaigns: [], created: 0, errors: [readErr.message] };
+    return { source: 'rest', fetched: 0, matched: 0, updated: 0, newWpCampaigns: [], created: 0, removed: 0, errors: [readErr.message] };
   }
   const owned = new Map((existing ?? []).map((p) => [p.slug, p.id]));
 
@@ -99,6 +103,22 @@ export async function syncProgramsFromWP(
     else updated++;
   }
 
+  // Hard-delete rows whose WP campaign is gone. We only touch WP-managed rows
+  // (wp_campaign_id is not null) — manually authored rows in the admin are left
+  // alone. A row is removed when its slug did not come back in this fetch, which
+  // for REST means the campaign CPT was deleted and for scrape means the page
+  // 302'd off /campaign/<slug> (treated as "not live").
+  const liveSlugs = new Set(campaigns.map((c) => c.slug));
+  const staleIds = (existing ?? [])
+    .filter((p) => p.wp_campaign_id != null && !liveSlugs.has(p.slug))
+    .map((p) => p.id);
+  let removed = 0;
+  for (const id of staleIds) {
+    const { error } = await client.from('programs').delete().eq('id', id);
+    if (error) errors.push(`${id} (delete): ${error.message}`);
+    else removed++;
+  }
+
   return {
     source,
     fetched: campaigns.length,
@@ -106,6 +126,7 @@ export async function syncProgramsFromWP(
     updated,
     newWpCampaigns,
     created,
+    removed,
     errors,
   };
 }
