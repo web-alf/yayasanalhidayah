@@ -43,7 +43,7 @@ export default function ResourceList({ resourceSlug, initial }: Props) {
       }
       const s = body.summary ?? {};
       const fresh = s.created
-        ? `\n${s.created} campaign baru dibuat sebagai draf — lengkapi & publikasikan.`
+        ? `\n${s.created} campaign baru dipublikasikan.`
         : '';
       toast.success(`Sync ${s.source}: ${s.updated}/${s.matched} diperbarui.${fresh}`);
       window.location.reload();
