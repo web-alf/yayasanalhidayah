@@ -74,10 +74,21 @@ export async function getRekening(client: MaybeDB): Promise<Rekening[]> {
 // ── programs (yayasanalhidayah donation campaigns) ───────────────────────────
 export type Program = Database['public']['Tables']['programs']['Row'];
 
-/** All published programs, in sort order (newest-first as authored). */
+/**
+ * All published programs for the /program page, highest-traction first:
+ * funds raised desc, then donor count, then the admin-authored sort_order as a
+ * tiebreaker for not-yet-funded rows. So the campaign that has collected the
+ * most rupiah always leads the grid.
+ */
 export async function getPrograms(client: MaybeDB): Promise<Program[]> {
   if (!client) return [];
-  const { data } = await client.from('programs').select('*').eq('is_published', true).order('sort_order', { ascending: true });
+  const { data } = await client
+    .from('programs')
+    .select('*')
+    .eq('is_published', true)
+    .order('raised_amount', { ascending: false, nullsFirst: false })
+    .order('donatur_count', { ascending: false, nullsFirst: false })
+    .order('sort_order', { ascending: true });
   return (data ?? []) as Program[];
 }
 

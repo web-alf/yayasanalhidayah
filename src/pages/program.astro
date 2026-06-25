@@ -6,6 +6,7 @@ import Footer from '../components/Footer.astro';
 import ProgramCard from '../components/ProgramCard.astro';
 import { getPrograms } from '../lib/supabase/queries/marketing';
 import { programs as fallbackPrograms, donasiUrl } from '../data/programs';
+import { formatRupiahCompact } from '../lib/format';
 
 // SSR: list all published CMS campaigns; fall back to the static programs.ts
 // when the DB is empty / unreachable.
@@ -14,6 +15,17 @@ const programs = dbPrograms.length > 0
   ? dbPrograms
   : fallbackPrograms.map((p) => ({ ...p, donasi_url: donasiUrl(p.slug) }));
 const categories = ['Kafarat', 'Fidyah', 'Kemanusiaan'] as const;
+
+// Aggregate impact stats for the header strip (DB rows only — fallback rows
+// carry no live figures). Social proof shown above the grid.
+const totalRaised = dbPrograms.reduce((s, p) => s + (p.raised_amount ?? 0), 0);
+const totalDonatur = dbPrograms.reduce((s, p) => s + (p.donatur_count ?? 0), 0);
+const hasImpact = totalRaised > 0 || totalDonatur > 0;
+const impactStats = [
+  { value: formatRupiahCompact(totalRaised), label: 'Terkumpul' },
+  { value: totalDonatur.toLocaleString('id-ID'), label: 'Donatur' },
+  { value: String(programs.length), label: 'Program Aktif' },
+];
 ---
 
 <Base title="Program Donasi — Yayasan Alhidayah" description="Daftar lengkap program donasi Yayasan Alhidayah: Kafarat, Fidyah, dan program kemanusiaan. Titipkan amanah Anda hari ini.">
@@ -23,17 +35,34 @@ const categories = ['Kafarat', 'Fidyah', 'Kemanusiaan'] as const;
     <div class="container">
       <div class="program-page-head" data-reveal>
         <nav class="breadcrumb" aria-label="Breadcrumb">
-          <a href="/">Beranda</a>
-          <span class="sep">/</span>
-          <span aria-current="page">Program</span>
+          <a href="/" class="breadcrumb__home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
+            </svg>
+            <span>Beranda</span>
+          </a>
+          <svg class="breadcrumb__sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+          <span aria-current="page">Program Donasi</span>
         </nav>
-        <div class="eyebrow"><span class="section-num">Daftar Program Donasi</span></div>
+        <div class="eyebrow"><span class="section-num">Salurkan Amanah Anda</span></div>
         <h1 class="display">
           Semua program yang<br/>bisa Anda <em>titipkan</em>.
         </h1>
         <p class="lede program-page-lede">
           Pilih kategori untuk menyaring program, atau lihat semua sekaligus. Setiap program adalah jembatan antara niat baik Anda dan mereka yang sedang menunggu bantuan.
         </p>
+
+        {hasImpact && (
+          <dl class="impact-strip" aria-label="Ringkasan dampak donasi">
+            {impactStats.map((s) => (
+              <div class="impact-stat">
+                <dt class="impact-stat__value">{s.value}</dt>
+                <dd class="impact-stat__label">{s.label}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
         <div class="category-filter" role="tablist" aria-label="Filter kategori program">
           <button class="filter-chip is-active" role="tab" aria-selected="true" data-filter="all">
             Semua

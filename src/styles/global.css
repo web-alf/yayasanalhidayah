@@ -1579,13 +1579,17 @@ body:has(.not-found) .nav-inner {
 .breadcrumb {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding: 7px 14px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-alt);
 }
 .breadcrumb a {
   color: var(--ink-2);
@@ -1593,14 +1597,59 @@ body:has(.not-found) .nav-inner {
 }
 .breadcrumb a:hover { color: var(--brand); }
 [data-theme="dark"] .breadcrumb a:hover { color: var(--brand-3); }
-.breadcrumb .sep { opacity: 0.5; }
+.breadcrumb__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.breadcrumb__home svg { width: 14px; height: 14px; }
+.breadcrumb__sep {
+  width: 13px;
+  height: 13px;
+  opacity: 0.45;
+  flex-shrink: 0;
+}
 .breadcrumb [aria-current="page"] { color: var(--ink); }
+
+/* Impact strip — aggregate social proof above the filter chips. */
+.impact-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 4px;
+}
+.impact-stat {
+  flex: 1 1 0;
+  min-width: 130px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+.impact-stat__value {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.impact-stat:first-child .impact-stat__value { color: var(--brand); }
+[data-theme="dark"] .impact-stat:first-child .impact-stat__value { color: var(--brand-3); }
+.impact-stat__label {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 
 .category-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 32px;
 }
 .filter-chip {
   display: inline-flex;
@@ -1661,10 +1710,16 @@ body:has(.not-found) .nav-inner {
   text-transform: uppercase;
 }
 
+@media (max-width: 640px) {
+  .impact-stat { flex-basis: calc(50% - 7px); min-width: 0; padding: 14px 16px; }
+  .impact-stat:first-child { flex-basis: 100%; }
+}
 @media (max-width: 480px) {
   .program-page-head { margin-bottom: 36px; }
   .program-page-head .display { font-size: clamp(28px, 7vw, 36px); }
   .filter-chip { padding: 8px 14px; font-size: 11px; }
   .category-filter { gap: 8px; }
   .programs-foot { margin-top: 36px; }
+  .breadcrumb { font-size: 10px; letter-spacing: 0.12em; gap: 8px; }
+  .impact-strip { gap: 10px; }
 }
