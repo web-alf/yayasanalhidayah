@@ -40,3 +40,4 @@ campaigns/
 
 # build artifacts
 .build.log
+.gstack/
