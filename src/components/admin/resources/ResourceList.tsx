@@ -42,8 +42,8 @@ export default function ResourceList({ resourceSlug, initial }: Props) {
         return;
       }
       const s = body.summary ?? {};
-      const fresh = s.newWpCampaigns?.length
-        ? `\n${s.newWpCampaigns.length} campaign baru di WP — tambahkan manual.`
+      const fresh = s.created
+        ? `\n${s.created} campaign baru dibuat sebagai draf — lengkapi & publikasikan.`
         : '';
       toast.success(`Sync ${s.source}: ${s.updated}/${s.matched} diperbarui.${fresh}`);
       window.location.reload();

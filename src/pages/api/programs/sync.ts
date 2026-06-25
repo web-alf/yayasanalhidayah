@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       action: 'update',
       entityType: 'programs',
       summary: `sync ${summary.source} dari WP: ${summary.updated}/${summary.matched} diperbarui` +
-        (summary.newWpCampaigns.length ? `, ${summary.newWpCampaigns.length} baru di WP` : ''),
+        (summary.created ? `, ${summary.created} draf baru dibuat` : ''),
     });
 
     return ok({ summary });
